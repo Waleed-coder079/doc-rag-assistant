@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Virtual environments
+.env
+.venv
+venv/
+ENV/
+
+# IDEs/editors
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Streamlit cache
+.streamlit/
+
+# FAISS / pickle outputs
+*.pkl
+*.pkl.*
+*.index
+output_docs/
+chunk_docs/
+emd_out_retr_in/

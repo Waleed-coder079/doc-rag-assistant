@@ -1,0 +1,14 @@
+streamlit
+requests
+python-dotenv
+faiss-cpu
+sentence-transformers
+torch
+transformers
+google-genai
+tqdm
+pdfminer.six
+beautifulsoup4
+html2text
+numpy
+llama-index
