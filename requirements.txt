@@ -3,12 +3,15 @@ requests
 python-dotenv
 faiss-cpu
 sentence-transformers
-torch
+torch==2.2.2+cpu
+-f https://download.pytorch.org/whl/torch_stable.html
 transformers
-google-genai
+google-generativeai
 tqdm
 pdfminer.six
 beautifulsoup4
 html2text
 numpy
-llama-index
+llama-index==0.10.20
+llama-index[embeddings]
+llama-index-embeddings-huggingface
