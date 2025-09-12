@@ -27,6 +27,8 @@ Thumbs.db
 *.pkl
 *.pkl.*
 *.index
-output_docs/
-chunk_docs/
+
+# Ignore generated outputs
+ing_out_split_in/
+split_out_emd_in/
 emd_out_retr_in/
