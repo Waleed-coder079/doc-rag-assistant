@@ -3,9 +3,7 @@ import time
 import streamlit as st
 from dotenv import load_dotenv
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
 import google.generativeai as genai
-
 
 from generator import load_index
 from generator import search
@@ -15,7 +13,7 @@ from generator import generate_answer
 # ---------- Streamlit App ----------
 def main():
     st.set_page_config(page_title="RAG Demo", layout="wide")
-    st.title("📚 Retrieval-Augmented Generation (RAG) Demo")
+    st.title("📚 RAG docs chat")
 
     # Load API key
     load_dotenv()
