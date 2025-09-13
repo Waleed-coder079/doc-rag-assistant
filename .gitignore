@@ -28,6 +28,3 @@ Thumbs.db
 *.pkl.*
 *.index
 
-# Ignore generated outputs
-ing_out_split_in/
-split_out_emd_in/
