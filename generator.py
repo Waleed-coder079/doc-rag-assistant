@@ -46,11 +46,15 @@ def search(query, index, metadata, embed_model, k=5, use_cosine=True):
         if idx == -1:
             continue
         meta = metadata[idx]
+
+        # ✅ Prefer URL if available, fallback to local source
+        source_link = meta.get("source_url") or meta.get("source")
+
         results.append({
             "rank": rank + 1,
             "score": float(D[0][rank]),
             "text": meta["text"],
-            "source": meta["source"],
+            "source": source_link,   # unified source field
             "title": meta.get("title"),
             "page": meta.get("page"),
             "paragraph_id": meta.get("paragraph_id"),
@@ -69,7 +73,7 @@ def generate_answer(query, retrieved_chunks, model_name=DEFAULT_MODEL):
         anchor = f"[{i}]"
         snippet = ch["text"].replace("\n", " ")
         context += f"{anchor} {snippet}\n"
-        citation_map[i] = ch
+        citation_map[i] = ch   # keeps full chunk info (with URL/source)
 
     prompt = f"""
 You are a helpful AI assistant. Use only the provided context to answer the query. 
