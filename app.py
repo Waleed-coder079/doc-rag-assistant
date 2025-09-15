@@ -4,7 +4,6 @@ import streamlit as st
 from dotenv import load_dotenv
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import google.generativeai as genai
-
 from generator import load_index, search, generate_answer
 
 
