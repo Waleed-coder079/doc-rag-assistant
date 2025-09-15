@@ -59,7 +59,6 @@ def process_html(filepath: str):
         })
     return records
 
-
 def process_markdown(filepath: str):
     """Extract text from Markdown and split by headings/paragraphs."""
     records = []
