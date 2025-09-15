@@ -31,7 +31,8 @@ def chunk_pdf_docs(docs, chunk_size=800, overlap=200):
         for idx, part in enumerate(parts):
             chunks.append({
                 "parent_id": rec["id"],
-                "source": rec["source"],
+                "source": rec["source"],            # local filename
+                "source_url": rec.get("source_url"), # ✅ keep actual URL
                 "title": rec["title"],
                 "page": rec.get("page"),
                 "paragraph_id": rec.get("paragraph_id"),
@@ -44,7 +45,9 @@ def chunk_pdf_docs(docs, chunk_size=800, overlap=200):
 
 def chunk_other_docs(docs, chunk_size=800, embed_model=None):
     """Use SemanticSplitterNodeParser for non-PDF docs."""
-    embed_model = embed_model or HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embed_model = embed_model or HuggingFaceEmbedding(
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
     splitter = SemanticSplitterNodeParser(embed_model=embed_model, chunk_size=chunk_size)
 
     chunks = []
@@ -55,7 +58,8 @@ def chunk_other_docs(docs, chunk_size=800, embed_model=None):
         for idx, node in enumerate(nodes):
             chunks.append({
                 "parent_id": rec["id"],
-                "source": rec["source"],
+                "source": rec["source"],            # local filename
+                "source_url": rec.get("source_url"), # ✅ keep actual URL
                 "title": rec["title"],
                 "page": rec.get("page"),
                 "paragraph_id": rec.get("paragraph_id"),
