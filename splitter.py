@@ -65,7 +65,6 @@ def chunk_other_docs(docs, chunk_size=800, embed_model=None):
             })
     return chunks
 
-
 # Fixed configuration
 INPUT_FILE = "ing_out_split_in/docs.jsonl"
 OUTPUT_FILE = "split_out_emd_in/docs.jsonl"
