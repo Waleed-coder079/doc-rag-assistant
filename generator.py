@@ -62,6 +62,7 @@ def search(query, index, metadata, embed_model, k=5, use_cosine=True):
         })
     return results
 
+
 # ---------- Generator ----------
 def generate_answer(query, retrieved_chunks, model_name=DEFAULT_MODEL):
     """Call Gemini API with retrieved context and return answer + citations."""
