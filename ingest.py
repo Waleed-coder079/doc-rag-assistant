@@ -1,3 +1,4 @@
+
 import os
 import re
 import json
@@ -6,6 +7,10 @@ from pathlib import Path
 from pdfminer.high_level import extract_text as pdf_extract_text
 from bs4 import BeautifulSoup
 import html2text
+from llama_index.core import Document
+from docx import Document as DocxReader
+import tabula
+import pandas as pd
 
 
 # -------- Load URL mapping --------
@@ -23,28 +28,79 @@ def clean_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-def process_pdf(filepath: str):
-    """Extract page-wise text from a PDF file."""
-    records = []
-    text = pdf_extract_text(filepath)
-    if not text:
-        return records
+def extract_text_with_pages(filepath: str):
+    """Extract text with page-like splits (PDF vs DOCX)."""
+    ext = Path(filepath).suffix.lower()
 
-    pages = text.split("\f")  # page delimiter in pdfminer output
-    for page_num, page_text in enumerate(pages, start=1):
-        if not page_text.strip():
+    if ext == ".pdf":
+        text = pdf_extract_text(filepath)
+        # Store all pages as one string, but keep page mapping for metadata
+        pages = text.split("\f") if text else []
+        full_text = "\n".join(pages)
+        results = []
+        if full_text:
+            results.append((full_text, {"pages": list(range(1, len(pages)+1))}))
+        # Extract tables using tabula-py
+        try:
+            tables = tabula.read_pdf(filepath, pages="all", multiple_tables=True)
+            for idx, table in enumerate(tables):
+                if not table.empty:
+                    table_text = table.to_string(index=False)
+                    results.append((table_text, {
+                        "type": "table",
+                        "pages": "all",  # tabula does not always give page info
+                        "table_index": idx
+                    }))
+        except Exception as e:
+            print(f"Table extraction failed for PDF {filepath}: {e}")
+        return results
+
+    elif ext == ".docx":
+        doc = DocxReader(filepath)
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        full_text = "\n".join(paragraphs)
+        results = []
+        if full_text:
+            results.append((full_text, {"paragraphs": len(paragraphs)}))
+        # Extract tables from DOCX
+        for idx, table in enumerate(doc.tables):
+            rows = []
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells]
+                rows.append(cells)
+            # Convert to string (tabular)
+            table_df = pd.DataFrame(rows[1:], columns=rows[0] if rows else None)
+            table_text = table_df.to_string(index=False)
+            results.append((table_text, {
+                "type": "table",
+                "table_index": idx,
+                "section": "Unknown"  # Optionally, add logic to detect section
+            }))
+        return results
+
+    else:
+        raise ValueError(f"Unsupported file type: {ext}")
+
+def process_document(filepath: str):
+    """Process PDF or DOCX into LlamaIndex Documents with metadata."""
+    records = []
+    chunks = extract_text_with_pages(filepath)
+    for chunk_text, extra_meta in chunks:
+        if not chunk_text.strip():
             continue
-        page_text = clean_text(page_text)
-        records.append({
-            "id": str(uuid.uuid4()),
-            "source": os.path.basename(filepath),
-            "source_url": URL_MAP.get(os.path.basename(filepath), ""),
+        meta = {
+            "doc_id": str(uuid.uuid4()),
+            "file_name": os.path.basename(filepath),
             "title": Path(filepath).stem,
-            "page": page_num,
-            "paragraph_id": None,
-            "text": page_text
-        })
+        }
+        meta.update(extra_meta)
+        doc = Document(
+            text=chunk_text,
+            metadata=meta
+        )
+        records.append(doc)
     return records
+
 
 
 def process_html(filepath: str):
@@ -53,20 +109,20 @@ def process_html(filepath: str):
     with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
         soup = BeautifulSoup(f, "html.parser")
 
-    paragraphs = soup.find_all(["p", "div", "section", "article"])
-    for pid, para in enumerate(paragraphs, start=1):
-        text = clean_text(para.get_text(separator=" "))
-        if not text:
-            continue
-        records.append({
-            "id": str(uuid.uuid4()),
-            "source": os.path.basename(filepath),
-            "source_url": URL_MAP.get(os.path.basename(filepath), ""),
-            "title": soup.title.string if soup.title else Path(filepath).stem,
-            "page": None,
-            "paragraph_id": pid,
-            "text": text
-        })
+    # Extract all visible text from HTML
+    raw_text = soup.get_text(separator=" ")
+    cleaned_text = clean_text(raw_text)
+
+    # Save as a single record, similar to DOCX
+    records.append({
+        "id": str(uuid.uuid4()),
+        "source": os.path.basename(filepath),
+        "source_url": URL_MAP.get(os.path.basename(filepath), ""),
+        "title": soup.title.string if soup.title else Path(filepath).stem,
+        "page": None,
+        "paragraph_id": 1,
+        "text": cleaned_text
+    })
     return records
 
 def process_markdown(filepath: str):
@@ -78,18 +134,18 @@ def process_markdown(filepath: str):
     h = html2text.HTML2Text()
     h.ignore_links = True
     plain_text = h.handle(md_content)
+    cleaned_text = clean_text(plain_text)
 
-    paragraphs = [clean_text(p) for p in plain_text.split("\n\n") if clean_text(p)]
-    for pid, para in enumerate(paragraphs, start=1):
-        records.append({
-            "id": str(uuid.uuid4()),
-            "source": os.path.basename(filepath),
-            "source_url": URL_MAP.get(os.path.basename(filepath), ""),
-            "title": Path(filepath).stem,
-            "page": None,
-            "paragraph_id": pid,
-            "text": para
-        })
+    # Save as a single record, similar to HTML and DOCX
+    records.append({
+        "id": str(uuid.uuid4()),
+        "source": os.path.basename(filepath),
+        "source_url": URL_MAP.get(os.path.basename(filepath), ""),
+        "title": Path(filepath).stem,
+        "page": None,
+        "paragraph_id": 1,
+        "text": cleaned_text
+    })
     return records
 
 
@@ -98,8 +154,8 @@ def ingest(data_dir: str, out_file: str):
     all_records = []
 
     for file in Path(data_dir).glob("*"):
-        if file.suffix.lower() == ".pdf":
-            recs = process_pdf(str(file))
+        if file.suffix.lower() in [".pdf",".docx"]:
+            recs = process_document(str(file))
         elif file.suffix.lower() in [".html", ".htm"]:
             recs = process_html(str(file))
         elif file.suffix.lower() in [".md", ".markdown"]:
@@ -113,14 +169,22 @@ def ingest(data_dir: str, out_file: str):
 
     with open(out_file, "w", encoding="utf-8") as f:
         for rec in all_records:
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            if isinstance(rec, Document):
+                f.write(json.dumps({"text": rec.text, "metadata": rec.metadata}, ensure_ascii=False) + "\n")
+            else:
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
 
     print(f"✅ Saved {len(all_records)} records to {out_file}")
 
 
 # -------- Fixed paths --------
-INPUT_DIR = "ingestion_input"
-OUTPUT_FILE = "ing_out_split_in/docs.jsonl"
+# INPUT_DIR = "ingestion_input"
+# OUTPUT_FILE = "ing_out_split_in/docs.jsonl"
+
+# # Run ingestion directly
+# ingest(INPUT_DIR, OUTPUT_FILE)
+INPUT_DIR = "RAG_DATA/input"
+OUTPUT_FILE = "RAG_DATA/ing_out_split_in/docs.jsonl"
 
 # Run ingestion directly
 ingest(INPUT_DIR, OUTPUT_FILE)
