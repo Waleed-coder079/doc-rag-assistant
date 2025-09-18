@@ -4,7 +4,7 @@ import numpy as np
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 # Fixed configuration
-INDEX_DIR = "emd_out_retr_in"
+INDEX_DIR = "RAG_DATA/emd_out_retr_in"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
@@ -31,7 +31,7 @@ def search(query, index, metadata, embed_model, k=5, use_cosine=True):
         if idx == -1:
             continue
         meta = metadata[idx]
-        results.append({
+        result = {
             "rank": rank + 1,
             "score": float(D[0][rank]),
             "text": meta["text"],
@@ -40,7 +40,14 @@ def search(query, index, metadata, embed_model, k=5, use_cosine=True):
             "page": meta.get("page"),
             "paragraph_id": meta.get("paragraph_id"),
             "strategy": meta.get("strategy")
-        })
+        }
+        # Add table metadata if present
+        if meta.get("strategy") == "table_whole":
+            result["type"] = meta.get("type")
+            result["table_index"] = meta.get("table_index")
+            result["section"] = meta.get("section")
+            result["pages"] = meta.get("pages")
+        results.append(result)
     return results
 
 
