@@ -76,6 +76,12 @@ def main():
                     anchor.append(f"page={meta['page']}")
                 if meta.get("paragraph_id"):
                     anchor.append(f"para={meta['paragraph_id']}")
+                # Table metadata
+                if meta.get("strategy") == "table_whole":
+                    if meta.get("type"): anchor.append(f"type={meta['type']}")
+                    if meta.get("table_index") is not None: anchor.append(f"table_index={meta['table_index']}")
+                    if meta.get("section"): anchor.append(f"section={meta['section']}")
+                    if meta.get("pages"): anchor.append(f"pages={meta['pages']}")
                 anchor_text = ", ".join(anchor) if anchor else "no position info"
 
                 st.markdown(
@@ -97,6 +103,11 @@ def main():
                             "text": r["text"][:100],
                             "source": r.get("source"),
                             "title": r.get("title"),
+                            "strategy": r.get("strategy"),
+                            "type": r.get("type"),
+                            "table_index": r.get("table_index"),
+                            "section": r.get("section"),
+                            "pages": r.get("pages"),
                         }
                         for r in retrieved
                     ],
