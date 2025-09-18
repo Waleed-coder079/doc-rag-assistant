@@ -39,7 +39,7 @@ def build_faiss_index(chunks, embed_model_name, out_dir):
     # Save metadata (idx → chunk info, with correct source_url)
     metadata = {}
     for i, ch in enumerate(chunks):
-        metadata[i] = {
+        entry = {
             "text": ch["text"],
             "source": ch.get("source"),           # local path or filename
             "source_url": ch.get("source_url"),   # ✅ actual link
@@ -50,6 +50,13 @@ def build_faiss_index(chunks, embed_model_name, out_dir):
             "strategy": ch.get("strategy"),
             "parent_id": ch.get("parent_id"),
         }
+        # Add table metadata if present
+        if ch.get("strategy") == "table_whole":
+            entry["type"] = ch.get("type")
+            entry["table_index"] = ch.get("table_index")
+            entry["section"] = ch.get("section")
+            entry["pages"] = ch.get("pages")
+        metadata[i] = entry
 
     with open(f"{out_dir}/metadata.pkl", "wb") as f:
         pickle.dump(metadata, f)
@@ -58,8 +65,8 @@ def build_faiss_index(chunks, embed_model_name, out_dir):
 
 
 # Configuration + direct execution
-INPUT_FILE = "split_out_emd_in/docs.jsonl"
-OUTPUT_DIR = "emd_out_retr_in"
+INPUT_FILE = "RAG_DATA/split_out_emd_in/docs.jsonl"
+OUTPUT_DIR = "RAG_DATA/emd_out_retr_in"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 chunks = load_chunks(INPUT_FILE)
