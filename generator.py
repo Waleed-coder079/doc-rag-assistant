@@ -7,7 +7,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 import google.generativeai as genai
 
 # Fixed configuration
-INDEX_DIR = "RAG_DATA/emd_out_retr_in"
+INDEX_DIR = "emd_out_retr_in"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_MODEL = "gemini-1.5-flash-latest"
 
