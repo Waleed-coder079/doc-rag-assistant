@@ -67,8 +67,8 @@ def chunk_all_docs(docs, chunk_size=800):
     return chunks
 
 # Fixed configuration
-INPUT_FILE = "RAG_DATA/ing_out_split_in/docs.jsonl"
-OUTPUT_FILE = "RAG_DATA/split_out_emd_in/docs.jsonl"
+INPUT_FILE = "ing_out_split_in/docs.jsonl"
+OUTPUT_FILE = "split_out_emd_in/docs.jsonl"
 PDF_CHUNK_SIZE = 800
 PDF_OVERLAP = 200
 OTHER_CHUNK_SIZE = 800
