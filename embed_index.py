@@ -65,8 +65,8 @@ def build_faiss_index(chunks, embed_model_name, out_dir):
 
 
 # Configuration + direct execution
-INPUT_FILE = "RAG_DATA/split_out_emd_in/docs.jsonl"
-OUTPUT_DIR = "RAG_DATA/emd_out_retr_in"
+INPUT_FILE = "split_out_emd_in/docs.jsonl"
+OUTPUT_DIR = "emd_out_retr_in"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 chunks = load_chunks(INPUT_FILE)
