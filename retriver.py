@@ -4,7 +4,7 @@ import numpy as np
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 # Fixed configuration
-INDEX_DIR = "RAG_DATA/emd_out_retr_in"
+INDEX_DIR = "emd_out_retr_in"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
