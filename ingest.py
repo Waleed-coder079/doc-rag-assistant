@@ -183,8 +183,8 @@ def ingest(data_dir: str, out_file: str):
 
 # # Run ingestion directly
 # ingest(INPUT_DIR, OUTPUT_FILE)
-INPUT_DIR = "RAG_DATA/input"
-OUTPUT_FILE = "RAG_DATA/ing_out_split_in/docs.jsonl"
+INPUT_DIR = "input"
+OUTPUT_FILE = "ing_out_split_in/docs.jsonl"
 
 # Run ingestion directly
 ingest(INPUT_DIR, OUTPUT_FILE)
