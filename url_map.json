@@ -1,0 +1,21 @@
+{
+  "Artificial intelligence - Wikipedia.html": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+  "Machine learning - Wikipedia.html": "https://en.wikipedia.org/wiki/Machine_learning",
+  "Deep learning - Wikipedia.html": "https://en.wikipedia.org/wiki/Deep_learning",
+  "Mars_ Facts - NASA Science.html": "https://science.nasa.gov/mars/facts/",
+  
+  "fastapi_readme.md": "https://raw.githubusercontent.com/tiangolo/fastapi/master/README.md",
+  "langchain_readme.md": "https://raw.githubusercontent.com/langchain-ai/langchain/master/README.md",
+  "transformers_readme.md": "https://raw.githubusercontent.com/huggingface/transformers/main/README.md",
+  "pandas_readme.md": "https://raw.githubusercontent.com/pandas-dev/pandas/main/README.md",
+
+  "scaless_reference.pdf": "https://www.jpl.nasa.gov/_edu/pdfs/scaless_reference.pdf",
+  "oco-3-fact-sheet-4-pages.pdf": "https://ocov3.jpl.nasa.gov/documents/1/oco-3-fact-sheet-4-pages.pdf",
+  "pdc21_factsheet1.pdf": "https://cneos.jpl.nasa.gov/pd/cs/pdc21/pdc21_factsheet1.pdf",
+  "pdc21_factsheet3.pdf": "https://cneos.jpl.nasa.gov/pd/cs/pdc21/pdc21_factsheet3.pdf",
+  "PROTECTION AGAINST RETALIATION FACTSHEET 2020_03_24.pdf": "https://www.un.org/en/ethics/assets/pdfs/PROTECTION%20AGAINST%20RETALIATION%20FACTSHEET%202020_03_24.pdf",
+  "Ocean_Factsheet_People.pdf": "https://sustainabledevelopment.un.org/content/documents/Ocean_Factsheet_People.pdf",
+  "fact_sheet_air_pollution_and_health.pdf": "https://www.un.org/sites/un2.un.org/files/2021/10/fact_sheet_air_pollution_and_health.pdf",
+  "8326Factsheet_SummitPress_Kit__final.pdf": "https://sustainabledevelopment.un.org/content/documents/8326Factsheet_SummitPress_Kit__final.pdf",
+  "buac68-doc-solarsystemsheet.pdf": "https://www.pbslearningmedia.org/resource/buac68-sci-solarsystemsheet/solar-system-fact-sheet"
+}

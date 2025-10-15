@@ -1,0 +1,29 @@
+name: Auto Deploy RAG App to Railway
+
+on:
+  push:
+    branches:
+      - main  # triggers on push to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Install Railway CLI
+      - name: Install Railway CLI
+        run: curl -sSL https://railway.app/install.sh | sh
+
+      # 3. Authenticate Railway CLI
+      - name: Login to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway login --token $RAILWAY_TOKEN
+
+      # 4. Deploy to Railway
+      - name: Deploy to Railway
+        run: railway up --yes
