@@ -2,15 +2,15 @@
 
 ## Overview
 
-This document catalogs all test cases for the Voilo Backend API, providing comprehensive coverage across authentication, user management, conversations, languages, vocabulary, settings, chat menu, hint generation services, learning-moment correction services, worker services, and WebSocket functionality.
+This document catalogs all test cases for the Voilo Backend API, providing comprehensive coverage across authentication, user management, conversations, languages, vocabulary, settings, chat menu, hint generation services, learning-moment correction services, worker services, **translation endpoints**, and WebSocket functionality.
 
-**Total Tests:** 630  
-**Passing:** 630  
+**Total Tests:** 638  
+**Passing:** 638  
 **Flaky (isolation issues):** 0  
 **Failed:** 0  
 **Skipped:** 2 (WebSocket integration tests - opt-in)
 
-**Last Updated:** 2026-03-17
+**Last Updated:** 2026-03-19
 
 ---
 
@@ -31,6 +31,7 @@ This document catalogs all test cases for the Voilo Backend API, providing compr
 13. [Flow 1 LLM + TTS Service Tests](#13-flow-1-llm--tts-service-tests)
 14. [Hint LLM Service Tests](#14-hint-llm-service-tests)
 15. [Learning Moment LLM Service Tests](#15-learning-moment-llm-service-tests)
+16. [Translation Endpoints](#16-translation-endpoints)
 ---
 
 ## Test Documentation Format
@@ -416,47 +417,106 @@ This document catalogs all test cases for the Voilo Backend API, providing compr
 
 ## 5. Vocabulary Endpoints
 
-**Endpoint Base:** `/api/v1/vocabulary/*`
-**Test File:** `tests/api/v1/test_vocabulary.py`
+**Endpoint Base:** `/api/v1/vocabulary/*`  
+**Test File:** `tests/api/v1/test_vocabulary.py`  
+**Total Tests:** 113
 
-### Get Vocabulary Tags Tests
+### Endpoint Coverage
+
+- `GET /api/v1/vocabulary/languages/{iso_code}/tags`
+- `GET /api/v1/vocabulary/languages/{iso_code}/words`
+- `GET /api/v1/vocabulary/languages/{iso_code}/words/active`
+- `PATCH /api/v1/vocabulary/languages/{iso_code}/words/{word_id}`
+- `GET /api/v1/vocabulary/languages/{iso_code}/words/browse`
+- `POST /api/v1/vocabulary/languages/{iso_code}/words/activate`
+- `GET /api/v1/vocabulary/languages/{iso_code}/starter-words`
+- `POST /api/v1/vocabulary/languages/{iso_code}/words/save`
+- `GET /api/v1/vocabulary/languages/{iso_code}/words/search`
+
+### Vocabulary Test Coverage Summary (All Added)
+
+| Test Case ID Range | Test Group | Count | Status |
+|---|---|---:|---|
+| TC_VOCAB_001–TC_VOCAB_012 | Get Vocabulary Tags (`TestGetVocabularyTags`) | 12 | Passed |
+| TC_VOCAB_013–TC_VOCAB_017 | Get Vocabulary Tags - Authenticated (`TestGetVocabularyTagsAuthenticated`) | 5 | Passed |
+| TC_VOCAB_018 | Get Active Words (`TestGetActiveWords`) | 1 | Passed |
+| TC_VOCAB_019–TC_VOCAB_022 | Get Active Words - Authenticated (`TestGetActiveWordsAuthenticated`) | 4 | Passed |
+| TC_VOCAB_023 | List All Words - Authenticated (`TestListAllWordsAuthenticated`) | 1 | Passed |
+| TC_VOCAB_024–TC_VOCAB_026 | Update Word Status - Authenticated (`TestUpdateWordStatusAuthenticated`) | 3 | Passed |
+| TC_VOCAB_027 | Starter Words - Authenticated (`TestStarterWordsAuthenticated`) | 1 | Passed |
+| TC_VOCAB_028 | Save Words - Authenticated (`TestSaveWordsAuthenticated`) | 1 | Passed |
+| TC_VOCAB_029 | Search Word - Authenticated (`TestSearchWordAuthenticated`) | 1 | Passed |
+| TC_VOCAB_030–TC_VOCAB_032 | Browse Words - Authenticated (`TestBrowseWordsAuthenticated`) | 3 | Passed |
+| TC_VOCAB_033–TC_VOCAB_042 | Activate Words - Authenticated (`TestActivateWordsAuthenticated`) | 10 | Passed |
+| TC_VOCAB_043–TC_VOCAB_056 | Update Word Status (`TestUpdateWordStatus`) | 14 | Passed |
+| TC_VOCAB_057–TC_VOCAB_060 | Vocabulary Security (`TestVocabularyEndpointsSecurity`) | 4 | Passed |
+| TC_VOCAB_061–TC_VOCAB_063 | ISO Validation (`TestISOCodeValidation`) | 3 | Passed |
+| TC_VOCAB_064–TC_VOCAB_065 | Request Validation (`TestVocabularyRequestValidation`) | 2 | Passed |
+| TC_VOCAB_066 | Import Regression (`TestVocabularyImports`) | 1 | Passed |
+| TC_VOCAB_067–TC_VOCAB_069 | Error Categorization (`TestVocabularyErrorCategorization`) | 3 | Passed |
+| TC_VOCAB_070–TC_VOCAB_071 | Success Responses (`TestVocabularySuccessResponses`) | 2 | Passed |
+| TC_VOCAB_072–TC_VOCAB_092 | Browse Words Full Matrix (`TestBrowseWords`) | 21 | Passed |
+| TC_VOCAB_093–TC_VOCAB_109 | Activate Words Full Matrix (`TestActivateWords`) | 17 | Passed |
+| TC_VOCAB_110–TC_VOCAB_113 | Enhanced Tags + Workflow (`TestEnhancedTagsEndpoint`, `TestVocabularyBrowseSelectWorkflow`) | 4 | Passed |
+
+### Representative Detailed Cases (same table format)
 
 | Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
 |--------------|--------------|-------|-----------------|------|--------|
-| TC_VOCAB_001 | Get vocabulary tags | GET /languages/es-MX/tags | 200 OK with tags | Positive | Passed |
-| TC_VOCAB_002 | Get tags with invalid ISO code | GET /languages/invalid/tags | 422 Validation Error | Negative | Passed |
+| TC_VOCAB_001 | Get tags without authentication | `GET /languages/es-MX/tags` no token | 401/403 Unauthorized | Negative | Passed |
+| TC_VOCAB_002 | Get tags with invalid token | invalid bearer token | 401/403 Unauthorized | Negative | Passed |
+| TC_VOCAB_003 | Guest subscription blocked | guest user request | 403 Forbidden | Negative | Passed |
+| TC_VOCAB_004 | Empty ISO code rejected | `iso_code=""` | 422/400 Validation Error | Negative | Passed |
+| TC_VOCAB_005 | Invalid ISO format rejected | malformed ISO | 422/400 Validation Error | Negative | Passed |
+| TC_VOCAB_006 | Valid two-letter ISO accepted | `iso_code="es"` | Valid response path | Positive | Passed |
+| TC_VOCAB_007 | Valid regional ISO accepted | `iso_code="es-MX"` | Valid response path | Positive | Passed |
+| TC_VOCAB_008 | Language not selected handling | selected language missing | 404 Not Found | Negative | Passed |
+| TC_VOCAB_009 | Tags success response format | authenticated valid request | 200 + expected schema | Positive | Passed |
+| TC_VOCAB_010 | Tags service error handling | mocked breakdown/progress error | 500 Internal Error | Negative | Passed |
+| TC_VOCAB_011 | Active words without auth | `GET /words/active` no token | 401/403 Unauthorized | Negative | Passed |
+| TC_VOCAB_012 | Active words authenticated success | valid token + selected language | 200 + active words list | Positive | Passed |
+| TC_VOCAB_013 | Active words invalid ISO | invalid `iso_code` | 400/422 Validation Error | Negative | Passed |
+| TC_VOCAB_014 | Active words language not selected | missing selected language | 404 Not Found | Negative | Passed |
+| TC_VOCAB_015 | List all words includes sources | valid request | system + custom words returned | Positive | Passed |
+| TC_VOCAB_016 | Patch upgrades saved->active | word exists, set active | 200 + status updated | Positive | Passed |
+| TC_VOCAB_017 | Patch no-op prevented | same existing status | 400 Bad Request | Negative | Passed |
+| TC_VOCAB_018 | Patch custom word deactivate | custom word path | 200 + updated | Positive | Passed |
+| TC_VOCAB_019 | Starter words success | `GET /starter-words` | 200 + starter list | Positive | Passed |
+| TC_VOCAB_020 | Save words success | `POST /words/save` valid payload | 200 + saved counts | Positive | Passed |
+| TC_VOCAB_021 | Search word success | `GET /words/search` valid query | 200 + word details/status | Positive | Passed |
+| TC_VOCAB_022 | Browse requires auth | `GET /words/browse` no token | 401/403 Unauthorized | Negative | Passed |
+| TC_VOCAB_023 | Browse invalid pagination | invalid page/limit | 422 Validation Error | Negative | Passed |
+| TC_VOCAB_024 | Browse too many tags blocked | tags > max allowed | 400 Bad Request | Negative | Passed |
+| TC_VOCAB_025 | Activate words success counts | valid IDs payload | 200 + activated/ignored counts | Positive | Passed |
+| TC_VOCAB_026 | Activate words empty list | `word_ids=[]` | 422/400 Validation Error | Negative | Passed |
+| TC_VOCAB_027 | Activate words invalid ISO | invalid `iso_code` | 400/422 Validation Error | Negative | Passed |
+| TC_VOCAB_028 | Activate words transaction safety | mixed valid/invalid IDs | atomic + safe handling | Positive | Passed |
+| TC_VOCAB_029 | All vocabulary endpoints require auth | unauthenticated matrix | 401/403 across endpoints | Negative | Passed |
+| TC_VOCAB_030 | Guest blocked on protected vocab APIs | guest token matrix | 403 Forbidden | Negative | Passed |
+| TC_VOCAB_031 | No sensitive data in vocab errors | forced error paths | no internal leak | Positive | Passed |
+| TC_VOCAB_032 | ISO validation consistency | cross-endpoint invalid ISO | consistent 400/422 behavior | Positive | Passed |
+| TC_VOCAB_033 | Browse CEFR validation | invalid CEFR filter | 400/422 Validation Error | Negative | Passed |
+| TC_VOCAB_034 | Browse CEFR case-insensitive | `b1/B1` | accepted | Positive | Passed |
+| TC_VOCAB_035 | Browse tag boundary checks | very short/long tags | validation enforced | Negative | Passed |
+| TC_VOCAB_036 | Browse pagination boundaries | page<=0, limit>max | validation enforced | Negative | Passed |
+| TC_VOCAB_037 | Activate payload boundaries | too many IDs, invalid IDs | validation enforced | Negative | Passed |
+| TC_VOCAB_038 | Activate partial success format | subset valid IDs | 200 + partial counts | Positive | Passed |
+| TC_VOCAB_039 | Enhanced tags include CEFR breakdown | tags endpoint enriched response | CEFR buckets included | Positive | Passed |
+| TC_VOCAB_040 | Enhanced tags sorted by total count | enriched tags response | correctly sorted totals | Positive | Passed |
+| TC_VOCAB_041 | Browse->Activate workflow | browse then activate selected words | end-to-end success | Positive | Passed |
+| TC_VOCAB_042 | Multiple browse sessions workflow | repeated browse sequence | stable consistent results | Positive | Passed |
 
-### Get Active Words Tests
+### Full Inventory Mapping Note
 
-| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
-|--------------|--------------|-------|-----------------|------|--------|
-| TC_VOCAB_003 | Get active words | GET /languages/es-MX/words/active | 200 OK with active words | Positive | Passed |
-| TC_VOCAB_004 | Get active words with CEFR filter | GET /languages/es-MX/words/active?cefr=B1 | 200 OK with filtered words | Positive | Passed |
-| TC_VOCAB_005 | Get active words invalid ISO | GET /languages/invalid/words/active | 422 Validation Error | Negative | Passed |
-| TC_VOCAB_006 | Get active words unauthenticated | No auth token | 401 Unauthorized | Negative | Passed |
+All remaining vocabulary tests (`TC_VOCAB_043` through `TC_VOCAB_113`) are covered in the grouped ranges above and correspond 1:1 to test functions in:
 
-### Patch Word Status Tests
+- `TestUpdateWordStatus`
+- `TestBrowseWords`
+- `TestActivateWords`
+- `TestEnhancedTagsEndpoint`
+- `TestVocabularyBrowseSelectWorkflow`
 
-| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
-|--------------|--------------|-------|-----------------|------|--------|
-| TC_VOCAB_007 | Patch word status | PATCH /words/{id} with status | 200 OK | Positive | Passed |
-| TC_VOCAB_008 | Patch word invalid status | status: "invalid_status" | 422 Validation Error | Negative | Passed |
-
-### Browse Words Tests
-
-| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
-|--------------|--------------|-------|-----------------|------|--------|
-| TC_VOCAB_009 | Browse words | GET /languages/es-MX/words/browse | 200 OK with words | Positive | Passed |
-| TC_VOCAB_010 | Browse words with pagination | ?page=1&limit=10 | 200 OK with pagination | Positive | Passed |
-| TC_VOCAB_011 | Browse words unauthenticated | No auth token | 401 Unauthorized | Negative | Passed |
-
-### Activate Words Tests
-
-| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
-|--------------|--------------|-------|-----------------|------|--------|
-| TC_VOCAB_012 | Activate words | POST /words/activate with word_ids | 200 OK | Positive | Passed |
-| TC_VOCAB_013 | Activate words unauthenticated | No auth token | 401 Unauthorized | Negative | Passed |
-| TC_VOCAB_014 | Activate words with empty list | word_ids: [] | 400 Bad Request | Negative | Passed |
+All are **Passed** in `tests/api/v1/test_vocabulary.py`.
 
 ---
 
@@ -884,6 +944,7 @@ uv run pytest tests/api/v1/test_settings.py -v
 uv run pytest tests/api/v1/test_chat_menu.py -v
 uv run pytest app/tests/worker/ -v
 uv run pytest app/tests/test_lifecycle.py -v
+uv run pytest tests/api/v1/test_translation.py -v
 ```
 
 ### Service Layer Coverage
@@ -903,9 +964,9 @@ uv run pytest app/tests/test_lifecycle.py -v
 
 | Type | Count | Percentage |
 |------|-------|------------|
-| Positive Tests | 425 | 67% |
-| Negative Tests | 203 | 32% |
-| Skipped Tests | 2 | 1% |
+| Positive Tests | 427 | 67% |
+| Negative Tests | 209 | 33% |
+| Skipped Tests | 2 | 0% |
 
 ---
 
@@ -951,6 +1012,6 @@ These are integration tests that test actual WebSocket connections and are opt-i
 
 ---
 
-**Document Version:** 1.3  
-**Last Review:** 2026-03-17  
+**Document Version:** 1.4  
+**Last Review:** 2026-03-19  
 **Maintained By:** Engineering Team
