@@ -41,47 +41,125 @@ This document catalogs all test cases for the Voilo Backend API, providing compr
 
 ## 1. Authentication Endpoints
 
-**Endpoint Base:** `/api/v1/auth/*`
-**Test File:** `tests/api/v1/test_auth.py`
+**Endpoint Base:** `/api/v1/auth/*`  
+**Test File:** `tests/api/v1/test_auth.py`  
+**Total Tests:** 76
 
 ### OAuth Login Tests
 
 | Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
 |--------------|--------------|-------|-----------------|------|--------|
-| TC_AUTH_001 | Valid OAuth login with Google | `{"provider": "google", "redirect_url": "https://api.voilo.ai/auth/callback"}` | 200 OK with auth URL | Positive | Passed |
-| TC_AUTH_002 | Missing provider in OAuth login | `{"redirect_url": "https://example.com"}` | 422 Validation Error | Negative | Passed |
-| TC_AUTH_003 | Invalid redirect URL format | `{"provider": "google", "redirect_url": "not-a-url"}` | 422 Validation Error | Negative | Passed |
+| TC_AUTH_001 | OAuth login Google valid | provider=google, valid redirect | 200/500/503 | Positive | Passed |
+| TC_AUTH_002 | OAuth login Apple valid | provider=apple, valid redirect | 200/500/503 | Positive | Passed |
+| TC_AUTH_003 | OAuth login invalid provider | provider=facebook | 422 | Negative | Passed |
+| TC_AUTH_004 | OAuth login missing provider | redirect only | 422 | Negative | Passed |
+| TC_AUTH_005 | OAuth login returns URL + state | valid request + mocked Supabase | 200 + `auth_url`,`state` | Positive | Passed |
+| TC_AUTH_006 | OAuth login unauthorized redirect blocked | redirect not allowlisted | 400 | Negative | Passed |
+| TC_AUTH_007 | OAuth login maps connection error | mocked `ConnectionError` | 503 | Negative | Passed |
+| TC_AUTH_008 | OAuth login maps timeout error | mocked `TimeoutError` | 504 | Negative | Passed |
+| TC_AUTH_009 | OAuth login missing redirect_url | provider only | 422 | Negative | Passed |
+| TC_AUTH_010 | OAuth login empty redirect_url | redirect="" | 422 | Negative | Passed |
+| TC_AUTH_011 | OAuth login invalid redirect URL format | redirect invalid URL | 422 | Negative | Passed |
+| TC_AUTH_012 | OAuth login localhost redirect allowed | localhost callback | 200/500/503 | Positive | Passed |
+| TC_AUTH_013 | OAuth login redirect URL too long | >2048 chars | 422 | Negative | Passed |
+
+### OAuth Callback Tests
+
+| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
+|--------------|--------------|-------|-----------------|------|--------|
+| TC_AUTH_014 | OAuth callback missing code | no `code` | 422 | Negative | Passed |
+| TC_AUTH_015 | OAuth callback empty code | `code=""` | 422 | Negative | Passed |
+| TC_AUTH_016 | OAuth callback code too short | short `code` | 422 | Negative | Passed |
+| TC_AUTH_017 | OAuth callback invalid code format | bad chars/spaces | 422 | Negative | Passed |
+| TC_AUTH_018 | OAuth callback missing provider | no provider | 200/400/422 | Negative | Passed |
+| TC_AUTH_019 | OAuth callback missing state | no `state` | 422 | Negative | Passed |
+| TC_AUTH_020 | OAuth callback valid structure | syntactically valid payload | 400 (invalid state) | Positive | Passed |
+| TC_AUTH_021 | OAuth callback invalid state | state not found | 400 + invalid/expired detail | Negative | Passed |
+| TC_AUTH_022 | OAuth callback provider mismatch | state provider != payload provider | 400 + state deleted | Negative | Passed |
+| TC_AUTH_023 | OAuth callback happy path | valid state + exchange success | 200 + tokens + user | Positive | Passed |
+| TC_AUTH_024 | OAuth callback DB unique constraint | commit unique constraint failure | 409 + rollback | Negative | Passed |
 
 ### Password Login Tests
 
 | Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
 |--------------|--------------|-------|-----------------|------|--------|
-| TC_AUTH_004 | Valid password login | `{"email": "user@example.com", "password": "ValidPass123!"}` | 200 OK or 401 (invalid credentials) | Positive | Passed |
-| TC_AUTH_005 | Login with invalid email format | `{"email": "invalid-email", "password": "ValidPass123!"}` | 422 Validation Error | Negative | Passed |
-| TC_AUTH_006 | User enumeration prevention | Non-existent user vs wrong password | Same generic error message | Positive | Passed |
+| TC_AUTH_025 | Login missing email | password only | 422 | Negative | Passed |
+| TC_AUTH_026 | Login missing password | email/username only | 422 | Negative | Passed |
+| TC_AUTH_027 | Login invalid email format | invalid email | 422 | Negative | Passed |
+| TC_AUTH_028 | Login empty email | email="" | 422 | Negative | Passed |
+| TC_AUTH_029 | Login empty password | password="" | 422 | Negative | Passed |
+| TC_AUTH_030 | Login password too long | >128 chars | 422 | Negative | Passed |
+| TC_AUTH_031 | Login valid structure | valid email+password | 200/401/503 | Positive | Passed |
+| TC_AUTH_032 | Login enumeration prevention | nonexistent vs wrong password | same generic 401 behavior | Positive | Passed |
 
-### Password Reset Request Tests
-
-| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
-|--------------|--------------|-------|-----------------|------|--------|
-| TC_AUTH_007 | Password reset request | `{"email": "user@example.com"}` | 200 OK with success message | Positive | Passed |
-| TC_AUTH_008 | Password reset with empty email | `{"email": ""}` | 422 Validation Error | Negative | Passed |
-| TC_AUTH_009 | Password reset with invalid email | `{"email": "invalid"}` | 422 Validation Error | Negative | Passed |
-
-### Reset Password Confirmation Tests
+### Forgot Password Tests
 
 | Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
 |--------------|--------------|-------|-----------------|------|--------|
-| TC_AUTH_010 | Reset password with valid tokens | Valid access & refresh tokens | 200 OK | Positive | Passed |
-| TC_AUTH_011 | Reset password with short access token | Token < 20 chars | 400 Bad Request | Negative | Passed |
-| TC_AUTH_012 | Reset password with long access token | Token > 2048 chars | 400 Bad Request | Negative | Passed |
-| TC_AUTH_013 | Reset password with invalid JWT format | Invalid JWT structure | 400 Bad Request | Negative | Passed |
+| TC_AUTH_033 | Forgot password missing email | `{}` | 422 | Negative | Passed |
+| TC_AUTH_034 | Forgot password empty email | email="" | 422 | Negative | Passed |
+| TC_AUTH_035 | Forgot password invalid email format | invalid email | 422 | Negative | Passed |
+| TC_AUTH_036 | Forgot password email too long | >254 chars | 422 | Negative | Passed |
+| TC_AUTH_037 | Forgot password success response | valid request | 200 + generic success msg | Positive | Passed |
+| TC_AUTH_038 | Forgot password valid redirect URL | valid redirect_url | 200 | Positive | Passed |
+| TC_AUTH_039 | Forgot password localhost redirect | localhost redirect_url | 200 | Positive | Passed |
+| TC_AUTH_040 | Forgot password invalid redirect format | invalid redirect_url | 422 | Negative | Passed |
+| TC_AUTH_041 | Forgot password redirect too long | >2048 chars | 422 | Negative | Passed |
+| TC_AUTH_042 | Forgot password service unavailable still succeeds | Supabase unavailable path | 200 | Positive | Passed |
 
-### Service Availability Tests
+### Reset Password Tests
 
 | Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
 |--------------|--------------|-------|-----------------|------|--------|
-| TC_AUTH_014 | Service unavailable handling | Supabase client unavailable | 503 Service Unavailable | Negative | Passed |
+| TC_AUTH_043 | Reset password missing password | no `password` | 422 | Negative | Passed |
+| TC_AUTH_044 | Reset password missing access token | no `access_token` | 422 | Negative | Passed |
+| TC_AUTH_045 | Reset password missing refresh token | no `refresh_token` | 422 | Negative | Passed |
+| TC_AUTH_046 | Reset password weak password | weak password | 422 | Negative | Passed |
+| TC_AUTH_047 | Reset password no uppercase | lowercase only | 422 | Negative | Passed |
+| TC_AUTH_048 | Reset password no lowercase | uppercase only | 422 | Negative | Passed |
+| TC_AUTH_049 | Reset password no digit | no numeric | 422 | Negative | Passed |
+| TC_AUTH_050 | Reset password too short | <8 chars | 422 | Negative | Passed |
+| TC_AUTH_051 | Reset password too long | >128 chars | 422 | Negative | Passed |
+| TC_AUTH_052 | Reset password common password | common/weak password | 422 | Negative | Passed |
+| TC_AUTH_053 | Reset password empty access token | access_token="" | 422 | Negative | Passed |
+| TC_AUTH_054 | Reset password access token too short | short token | 400 | Negative | Passed |
+| TC_AUTH_055 | Reset password access token too long | >2048 chars | 400 | Negative | Passed |
+| TC_AUTH_056 | Reset password invalid JWT format | invalid token format | 400 | Negative | Passed |
+| TC_AUTH_057 | Reset password valid structure | valid-shaped payload | 200/400 | Positive | Passed |
+| TC_AUTH_058 | Reset password no info leakage | invalid token paths | generic 400/422 | Positive | Passed |
+
+### Shared Auth Security Tests
+
+| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
+|--------------|--------------|-------|-----------------|------|--------|
+| TC_AUTH_059 | No sensitive data in auth errors | invalid signin | no traceback/internal leak | Positive | Passed |
+| TC_AUTH_060 | Consistent auth failure messages | multiple failing signins | consistent generic errors | Positive | Passed |
+| TC_AUTH_061 | Endpoints handle service unavailability | oauth/login + signin | controlled status codes | Positive | Passed |
+
+### Logout Tests
+
+| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
+|--------------|--------------|-------|-----------------|------|--------|
+| TC_AUTH_062 | Logout success | POST `/auth/logout` | 200 + success message | Positive | Passed |
+| TC_AUTH_063 | Logout service unavailable | mocked sign_out ConnectionError | 503 + generic technical message | Negative | Passed |
+| TC_AUTH_064 | Logout no auth required | no token | 200/503 (not auth-gated) | Positive | Passed |
+| TC_AUTH_065 | Logout null Supabase client | `get_supabase_client -> None` | 503 + generic technical message | Negative | Passed |
+
+### Refresh Token Tests
+
+| Test Case ID | Test Scenario | Input | Expected Result | Type | Status |
+|--------------|--------------|-------|-----------------|------|--------|
+| TC_AUTH_066 | Refresh missing token field | `{}` | 422 | Negative | Passed |
+| TC_AUTH_067 | Refresh empty token | refresh_token="" | 422 | Negative | Passed |
+| TC_AUTH_068 | Refresh invalid format | non-JWT token | 401 invalid/expired | Negative | Passed |
+| TC_AUTH_069 | Refresh expired token | mocked refresh returns None | 401 invalid/expired | Negative | Passed |
+| TC_AUTH_070 | Refresh success | mocked refresh session success | 200 + new tokens | Positive | Passed |
+| TC_AUTH_071 | Refresh no auth required | refresh endpoint called without bearer | 200/401/503 | Positive | Passed |
+| TC_AUTH_072 | Refresh returns both tokens | mocked success response | access+refresh present | Positive | Passed |
+| TC_AUTH_073 | Refresh connection error mapping | mocked `ConnectionError` | 503 | Negative | Passed |
+| TC_AUTH_074 | Refresh timeout mapping | mocked `TimeoutError` | 504 | Negative | Passed |
+| TC_AUTH_075 | Refresh null client | `get_supabase_client -> None` | 503 | Negative | Passed |
+| TC_AUTH_076 | Refresh response schema | success payload validation | required fields/types valid | Positive | Passed |
 
 ---
 
